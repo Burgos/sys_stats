@@ -251,7 +251,7 @@ bool parseProcStat(P& p, std::string proc_file, int pid, bool read_cmdline, floa
   return true;
 }
 
-Thread::Thread() : cpu_use{0}, previous_uptime{0, 0}, uptime{0, 0}
+Thread::Thread() : cpu_use{0}, previous_uptime{0, 0}, uptime{0, 0}, mark{false}
 {
 }
 
@@ -279,7 +279,7 @@ int Thread::id()
   return tid;
 }
 
-Process::Process() : cpu_use{0}, mem_use{0}, previous_uptime{0, 0}, uptime{0, 0}
+Process::Process() : cpu_use{0}, mem_use{0}, previous_uptime{0, 0}, uptime{0, 0}, mark{false}
 {
 }
 

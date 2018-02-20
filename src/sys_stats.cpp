@@ -36,6 +36,17 @@ uptime readuptime()
   return uptime;
 }
 
+/// Converts the value with the SI prefix to the base value
+static unsigned long long prefixedUnitToValue(unsigned long long value, char unit)
+{
+  // clang-format off
+  return value * (unit == 'k' ? 1024 :
+    unit == 'M' ? 1024UL * 1024 :
+    unit == 'G' ? 1024UL * 1024 * 1024 :
+    unit == 'T' ? 1024UL * 1024 * 1024 * 1024 : 1);
+  // clang-format on
+}
+
 /// gets the hwmon path of the coretemp sensor
 std::string get_hwmon_path()
 {
@@ -507,24 +518,14 @@ bool SysStats::getMemory()
     if (fscanf(fp, "%511s %lu %31s", field, &value, unit) != 3)
       continue;
 
-    // clang-format off
     if (strcmp(field, "MemTotal:") == 0)
     {
-      this->total_memory =
-          value * (unit[0] == 'k' ? 1024 :
-                   unit[0] == 'M' ? 1024UL * 1024 :
-                   unit[0] == 'G' ? 1024UL * 1024 * 1024 :
-                   unit[0] == 'T' ? 1024UL * 1024 * 1024 * 1024 : 1);
+      this->total_memory = prefixedUnitToValue(value, unit[0]);
     }
     else if (strcmp(field, "MemFree:") == 0)
     {
-      this->free_memory =
-          value * (unit[0] == 'k' ? 1024 :
-                   unit[0] == 'M' ? 1024UL * 1024 :
-                   unit[0] == 'G' ? 1024UL * 1024 * 1024 :
-                   unit[0] == 'T' ? 1024UL * 1024 * 1024 * 1024 : 1);
+      this->free_memory = prefixedUnitToValue(value, unit[0]);
     }
-    // clang-format on
   }
 
   fclose(fp);

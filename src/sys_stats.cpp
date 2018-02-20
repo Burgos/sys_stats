@@ -526,6 +526,22 @@ bool SysStats::getMemory()
     {
       this->free_memory = prefixedUnitToValue(value, unit[0]);
     }
+    else if (strcmp(field, "Buffers:") == 0)
+    {
+      this->buffers = prefixedUnitToValue(value, unit[0]);
+    }
+    else if (strcmp(field, "Cached:") == 0)
+    {
+      this->cached = prefixedUnitToValue(value, unit[0]);
+    }
+    else if (strcmp(field, "Shmem:") == 0)
+    {
+      this->shmem = prefixedUnitToValue(value, unit[0]);
+    }
+    else if (strcmp(field, "SReclaimable:") == 0)
+    {
+      this->sreclaimable = prefixedUnitToValue(value, unit[0]);
+    }
     else if (strcmp(field, "SwapTotal:") == 0)
     {
       this->total_swap = prefixedUnitToValue(value, unit[0]);

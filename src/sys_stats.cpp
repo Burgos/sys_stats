@@ -525,8 +525,6 @@ bool SysStats::getMemory()
                    unit[0] == 'T' ? 1024UL * 1024 * 1024 * 1024 : 1);
     }
     // clang-format on
-
-    break;
   }
 
   fclose(fp);

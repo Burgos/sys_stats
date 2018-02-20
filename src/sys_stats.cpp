@@ -526,6 +526,14 @@ bool SysStats::getMemory()
     {
       this->free_memory = prefixedUnitToValue(value, unit[0]);
     }
+    else if (strcmp(field, "SwapTotal:") == 0)
+    {
+      this->total_swap = prefixedUnitToValue(value, unit[0]);
+    }
+    else if (strcmp(field, "SwapFree:") == 0)
+    {
+      this->free_swap = prefixedUnitToValue(value, unit[0]);
+    }
   }
 
   fclose(fp);

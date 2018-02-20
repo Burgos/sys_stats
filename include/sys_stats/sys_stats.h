@@ -187,6 +187,8 @@ struct SysStats
   float uptime_diff;
   unsigned long long total_memory;
   unsigned long long free_memory;
+  unsigned long long total_swap;
+  unsigned long long free_swap;
   std::string coretemp_path;
 
   decltype(std::chrono::steady_clock::now()) prev_iftime;

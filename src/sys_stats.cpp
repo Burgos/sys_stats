@@ -554,6 +554,14 @@ bool SysStats::getMemory()
 
   fclose(fp);
 
+  if (this->total_memory != 0)
+  {
+    auto used_mem = this->total_memory - this->free_memory;
+    used_mem -= (this->buffers + this->cached + this->sreclaimable - this->shmem);
+    this->mem_use_total = (float(used_mem) / this->total_memory) * 100.0f;
+    this->swap_use_total = 100 - (float(this->free_swap) / this->total_swap) * 100.0f;
+  }
+
   return this->total_memory == 0;
 }
 

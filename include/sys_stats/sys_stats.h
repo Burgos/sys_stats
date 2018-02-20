@@ -156,6 +156,8 @@ struct SysStats
   std::vector<Net> interface;
   std::vector<Disk> disks;
   float cpu_use_total;
+  float mem_use_total;
+  float swap_use_total;
 
   SysStats();
 

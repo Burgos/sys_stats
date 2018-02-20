@@ -307,7 +307,8 @@ int Process::id()
   return pid;
 }
 
-SysStats::SysStats() : previous_uptime(readuptime()), coretemp_path(get_hwmon_path())
+SysStats::SysStats()
+  : mem_use_total(0), swap_use_total(0), previous_uptime(readuptime()), coretemp_path(get_hwmon_path())
 {
 }
 

@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <linux/wireless.h>
 
 namespace sys_stats
 {
@@ -149,12 +150,35 @@ struct Disk
   bool mark;
 };
 
+struct Wifi
+{
+  std::string interface;
+  std::string ssid;
+  float frequency;     // Hz
+  float bitrate;       // b/s
+  float link_quality;  // %
+  float signal_level;  // dBm
+
+  Wifi();
+  ~Wifi();
+
+ private:
+  friend struct SysStats;
+  void queryDriver();
+  int driver_socket;
+  iwreq driver_rq;
+  float qual;    // from /proc/net/wireless
+  int max_qual;  // from the driver
+  bool mark;
+};
+
 struct SysStats
 {
   std::vector<Process> processes;
   std::vector<Cpu> cpu;
   std::vector<Net> interface;
   std::vector<Disk> disks;
+  std::vector<Wifi> wifi;
   float cpu_use_total;
   float mem_use_total;
   float swap_use_total;
@@ -181,6 +205,8 @@ struct SysStats
   bool getInterfaceData();
   // cppcheck-suppress unusedPrivateFunction
   bool getDiskData();
+  // cppcheck-suppress unusedPrivateFunction
+  bool getWifiData();
 
   uptime previous_uptime;
   uptime current_uptime;

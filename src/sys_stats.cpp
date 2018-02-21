@@ -12,6 +12,8 @@
 #include <fstream>
 #include <chrono>
 #include <sstream>
+#include <cmath>
+#include <sys/ioctl.h>
 #include <sys/statvfs.h>
 #include "sys_stats/sys_stats.h"
 
@@ -863,5 +865,124 @@ bool SysStats::getDiskData()
               std::end(disks));
 
   return true;
+}
+
+bool SysStats::getWifiData()
+{
+  for (auto& i : wifi)
+    i.mark = false;
+
+  std::ifstream file("/proc/net/wireless");
+  static std::string line;
+  if (!file.is_open())
+    return false;
+
+  /*
+   * Inter-| sta-|   Quality        |   Discarded packets               | Missed | WE
+   *  face | tus | link level noise |  nwid  crypt   frag  retry   misc | beacon | 22
+   *  wlp3s0: 0000   48.  -62.  -256        0      0      0      0     75        0
+   */
+  while (getline(file, line))
+  {
+    auto colon = line.find(':');
+    if (colon == std::string::npos)
+      continue;
+
+    auto interface_name = ltrim(line.substr(0, colon));
+    line = line.substr(colon + 1);
+    float qual, level;
+    int dummy;
+    sscanf(line.c_str(), " %i %f %f", &dummy, &qual, &level);
+
+    // find the inteface
+    auto i = std::find_if(
+        std::begin(wifi), std::end(wifi), [&interface_name](const Wifi& w) { return w.interface == interface_name; });
+
+    if (i == std::end(wifi))
+    {
+      i = wifi.insert(std::end(wifi), std::move(Wifi{}));
+      (*i).interface = interface_name;
+    }
+    auto& iface = *i;
+    iface.mark = true;
+
+    // collect what we can
+    iface.queryDriver();
+
+    iface.qual = qual;
+    iface.signal_level = level;
+    iface.link_quality = iface.qual / iface.max_qual * 100;
+  }
+
+  wifi.erase(std::remove_if(std::begin(wifi), std::end(wifi), [](const Wifi& w) { return w.mark == false; }),
+             std::end(wifi));
+
+  return true;
+}
+
+void Wifi::queryDriver()
+{
+  if (this->driver_socket == -1)
+  {
+    this->driver_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (this->driver_socket == -1)
+      return;
+  }
+
+  char essid[IW_ESSID_MAX_SIZE + 1] = {0};
+  strncpy(this->driver_rq.ifr_name, this->interface.c_str(), this->interface.size());
+  this->driver_rq.u.essid.pointer = (caddr_t)essid;
+  this->driver_rq.u.essid.length = IW_ESSID_MAX_SIZE + 1;
+  this->driver_rq.u.essid.flags = 0;
+
+  if (ioctl(this->driver_socket, SIOCGIWESSID, &this->driver_rq) == 0)
+  {
+    // copies to the member
+    this->ssid = essid;
+  }
+
+  // this doesn't change per device, let's just load it once
+  if (this->max_qual == 0)
+  {
+    // read the range info, needed for the max quality
+    char range_buffer[sizeof(iw_range) * 2];
+    this->driver_rq.u.data.pointer = (caddr_t)range_buffer;
+    this->driver_rq.u.data.length = sizeof(range_buffer);
+    this->driver_rq.u.data.flags = 0;
+
+    if (ioctl(this->driver_socket, SIOCGIWRANGE, &this->driver_rq) == 0)
+    {
+      iw_range range;
+      memcpy(&range, range_buffer, sizeof(iw_range));
+
+      if (!(range.avg_qual.updated & IW_QUAL_QUAL_INVALID))
+      {
+        this->max_qual = (int)range.max_qual.qual;
+      }
+    }
+  }
+
+  // get bitrate and frequency
+  if (ioctl(this->driver_socket, SIOCGIWRATE, &this->driver_rq) == 0)
+  {
+    this->bitrate = this->driver_rq.u.bitrate.value;
+  }
+
+  if (ioctl(this->driver_socket, SIOCGIWFREQ, &this->driver_rq) == 0)
+  {
+    this->frequency = (float)this->driver_rq.u.freq.m * pow(10, this->driver_rq.u.freq.e);
+  }
+}
+
+Wifi::Wifi() : driver_socket(-1), max_qual(0)
+{
+}
+
+Wifi::~Wifi()
+{
+  if (this->driver_socket != -1)
+  {
+    close(this->driver_socket);
+  }
 }
 }

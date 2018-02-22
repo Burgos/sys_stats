@@ -925,13 +925,7 @@ bool SysStats::getWifiData()
 
 void Wifi::queryDriver()
 {
-  if (this->driver_socket == -1)
-  {
-    this->driver_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    if (this->driver_socket == -1)
-      return;
-  }
-
+  this->driver_socket = socket(AF_INET, SOCK_DGRAM, 0);
   this->ssid = "";
 
   char essid[IW_ESSID_MAX_SIZE + 1] = {0};
@@ -944,43 +938,41 @@ void Wifi::queryDriver()
   {
     // copies to the member
     this->ssid = essid;
-  }
-  else
-  {
-      return;
-  }
 
-  // this doesn't change per device, let's just load it once
-  if (this->max_qual == 0)
-  {
-    // read the range info, needed for the max quality
-    char range_buffer[sizeof(iw_range) * 2];
-    this->driver_rq.u.data.pointer = (caddr_t)range_buffer;
-    this->driver_rq.u.data.length = sizeof(range_buffer);
-    this->driver_rq.u.data.flags = 0;
-
-    if (ioctl(this->driver_socket, SIOCGIWRANGE, &this->driver_rq) != -1)
+    // this doesn't change per device, let's just load it once
+    if (this->max_qual == 0)
     {
-      iw_range range;
-      memcpy(&range, range_buffer, sizeof(iw_range));
-
-      if (!(range.avg_qual.updated & IW_QUAL_QUAL_INVALID))
+      // read the range info, needed for the max quality
+      char range_buffer[sizeof(iw_range) * 2];
+      this->driver_rq.u.data.pointer = (caddr_t)range_buffer;
+      this->driver_rq.u.data.length = sizeof(range_buffer);
+      this->driver_rq.u.data.flags = 0;
+  
+      if (ioctl(this->driver_socket, SIOCGIWRANGE, &this->driver_rq) != -1)
       {
-        this->max_qual = (int)range.max_qual.qual;
+        iw_range range;
+        memcpy(&range, range_buffer, sizeof(iw_range));
+  
+        if (!(range.avg_qual.updated & IW_QUAL_QUAL_INVALID))
+        {
+          this->max_qual = (int)range.max_qual.qual;
+        }
       }
+    }
+  
+    // get bitrate and frequency
+    if (ioctl(this->driver_socket, SIOCGIWRATE, &this->driver_rq) != -1)
+    {
+      this->bitrate = this->driver_rq.u.bitrate.value;
+    }
+  
+    if (ioctl(this->driver_socket, SIOCGIWFREQ, &this->driver_rq) != -1)
+    {
+      this->frequency = (float)this->driver_rq.u.freq.m * pow(10, this->driver_rq.u.freq.e);
     }
   }
 
-  // get bitrate and frequency
-  if (ioctl(this->driver_socket, SIOCGIWRATE, &this->driver_rq) != -1)
-  {
-    this->bitrate = this->driver_rq.u.bitrate.value;
-  }
-
-  if (ioctl(this->driver_socket, SIOCGIWFREQ, &this->driver_rq) != -1)
-  {
-    this->frequency = (float)this->driver_rq.u.freq.m * pow(10, this->driver_rq.u.freq.e);
-  }
+  close(this->driver_socket);
 }
 
 Wifi::Wifi() : driver_socket(-1), max_qual(0)

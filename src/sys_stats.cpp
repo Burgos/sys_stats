@@ -938,7 +938,7 @@ void Wifi::queryDriver()
   this->driver_rq.u.essid.length = IW_ESSID_MAX_SIZE + 1;
   this->driver_rq.u.essid.flags = 0;
 
-  if (ioctl(this->driver_socket, SIOCGIWESSID, &this->driver_rq) == 0)
+  if (ioctl(this->driver_socket, SIOCGIWESSID, &this->driver_rq) != -1)
   {
     // copies to the member
     this->ssid = essid;
@@ -953,7 +953,7 @@ void Wifi::queryDriver()
     this->driver_rq.u.data.length = sizeof(range_buffer);
     this->driver_rq.u.data.flags = 0;
 
-    if (ioctl(this->driver_socket, SIOCGIWRANGE, &this->driver_rq) == 0)
+    if (ioctl(this->driver_socket, SIOCGIWRANGE, &this->driver_rq) != -1)
     {
       iw_range range;
       memcpy(&range, range_buffer, sizeof(iw_range));
@@ -966,12 +966,12 @@ void Wifi::queryDriver()
   }
 
   // get bitrate and frequency
-  if (ioctl(this->driver_socket, SIOCGIWRATE, &this->driver_rq) == 0)
+  if (ioctl(this->driver_socket, SIOCGIWRATE, &this->driver_rq) != -1)
   {
     this->bitrate = this->driver_rq.u.bitrate.value;
   }
 
-  if (ioctl(this->driver_socket, SIOCGIWFREQ, &this->driver_rq) == 0)
+  if (ioctl(this->driver_socket, SIOCGIWFREQ, &this->driver_rq) != -1)
   {
     this->frequency = (float)this->driver_rq.u.freq.m * pow(10, this->driver_rq.u.freq.e);
   }

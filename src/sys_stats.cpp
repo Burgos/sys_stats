@@ -932,6 +932,8 @@ void Wifi::queryDriver()
       return;
   }
 
+  this->ssid = "";
+
   char essid[IW_ESSID_MAX_SIZE + 1] = {0};
   strncpy(this->driver_rq.ifr_name, this->interface.c_str(), this->interface.size());
   this->driver_rq.u.essid.pointer = (caddr_t)essid;
@@ -942,6 +944,10 @@ void Wifi::queryDriver()
   {
     // copies to the member
     this->ssid = essid;
+  }
+  else
+  {
+      return;
   }
 
   // this doesn't change per device, let's just load it once

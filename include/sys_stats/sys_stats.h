@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <sys/socket.h>
 #include <linux/wireless.h>
 
 namespace sys_stats

@@ -341,6 +341,9 @@ bool get_sys_stats(SysStats* stats)
   if (!stats->get_processes())
     return false;
 
+  if (!stats->getWifiData())
+    return false;
+
   return true;
 }
 

@@ -167,7 +167,6 @@ struct Wifi
   friend struct SysStats;
   void queryDriver();
   int driver_socket;
-  iwreq driver_rq;
   float qual;    // from /proc/net/wireless
   int max_qual;  // from the driver
   bool mark;
